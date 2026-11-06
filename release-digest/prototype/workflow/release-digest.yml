@@ -1,0 +1,53 @@
+# Reference workflow (concept stage, not active in this repo).
+# To use: move this file to .github/workflows/ and digest.py to the repo root, then add:
+#   Secrets:   ANTHROPIC_API_KEY, SENDGRID_API_KEY, DIGEST_TO
+#   Variables: DIGEST_FROM, ANTHROPIC_MODEL (optional)
+# DIGEST_TO is a secret, not a variable, so recipient addresses stay out of public logs.
+
+name: Release Digest
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to summarize"
+        required: true
+        type: string
+
+# Least privilege: the job only reads repository contents.
+permissions:
+  contents: read
+
+# One digest per tag, even if the workflow is triggered twice.
+concurrency:
+  group: release-digest-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    # Skip prereleases; stakeholders hear about final releases only.
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Summarize release and email it
+        # Inputs are passed through env, never interpolated into the shell command.
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          DIGEST_TO: ${{ secrets.DIGEST_TO }}
+          DIGEST_FROM: ${{ vars.DIGEST_FROM }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+        run: python digest.py
