@@ -1,6 +1,6 @@
 # Release Digest
 
-**Concept: every GitHub release, summarized by AI and emailed to the people who need it.**
+**Concept: every software release, summarized by AI and emailed to the people who need it.**
 
 As a TPM at Twilio, I've seen product, engineering, and GTM teams quickly lose alignment on the latest releases and what they mean for the program and the business. Release Digest is designed to close that gap by turning every release into an exec summary and a customer changelog, delivered to stakeholders by email.
 
@@ -21,7 +21,7 @@ So someone, often a program manager, rewrites the same changes by hand for each 
 
 ## The idea
 
-When a release is published, a GitHub Action:
+When a release is published on Github, a GitHub Action:
 1. Collects the commits since the previous release.
 2. Flags risks with simple rules: reverts and breaking changes.
 3. Asks Claude to write two versions of the same update: an **exec summary** and a **customer changelog**.
