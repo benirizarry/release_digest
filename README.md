@@ -2,7 +2,7 @@
 
 **Concept: every software release, summarized by AI and emailed to the people who need it.**
 
-As a TPM at Twilio, I've seen product, engineering, and GTM teams quickly lose alignment on the latest releases and what they mean for the program and the business. Release Digest is designed to close that gap by turning every release into an exec summary and a customer changelog, delivered to stakeholders by email.
+As a TPM, I've seen product, engineering, and GTM teams quickly lose alignment on the latest releases and what they mean for the program and the business. Release Digest is designed to close that gap by turning every release into an exec summary and a customer changelog, delivered to stakeholders by email.
 
 
 > **Status: concept and design prototype.** This repo explains the idea, the design, and the expected output. The code in [`prototype/`](prototype/) is a reference sketch and has not been deployed. The output shown is a mockup built from a fictional repository.
