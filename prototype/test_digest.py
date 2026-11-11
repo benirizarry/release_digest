@@ -20,6 +20,10 @@ class RiskRules(unittest.TestCase):
         ]
         self.assertEqual(risk_flags(messages), messages[1:3])
 
+    def test_flags_conventional_commit_breaking_marker(self):
+        messages = ["feat!: drop v1 sharing API", "feat(api)!: rename fields", "feat: add export"]
+        self.assertEqual(risk_flags(messages), messages[:2])
+
     def test_clean_release_has_no_flags(self):
         self.assertEqual(risk_flags(["Fix typo in docs"]), [])
 

@@ -35,7 +35,7 @@ def load_config() -> dict[str, str]:
 
 
 def http_json(url: str, headers: dict[str, str], payload: dict | None = None):
-    """POST when a payload is given, otherwise GET. Errors include the status, never the headers."""
+    """POST when a payload is given, otherwise GET. Errors name the endpoint, never the headers."""
     data = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request(url, data=data, headers=headers)
     try:
@@ -43,6 +43,9 @@ def http_json(url: str, headers: dict[str, str], payload: dict | None = None):
             body = response.read()
     except urllib.error.HTTPError as err:
         sys.exit(f"Request to {url.split('?')[0]} failed with HTTP {err.code}")
+    except urllib.error.URLError as err:
+        # Network problems (DNS, timeout, no connection) have no HTTP status.
+        sys.exit(f"Request to {url.split('?')[0]} failed: {err.reason}")
     return json.loads(body) if body else None
 
 
@@ -57,10 +60,13 @@ def github(config: dict[str, str], path: str):
 def commits_since_last_release(config: dict[str, str]) -> tuple[str | None, list[str]]:
     """Return the previous release tag and the first line of each non-merge commit since it."""
     tag = config["RELEASE_TAG"]
-    # Releases are returned newest first, so the next published tag is the previous release.
-    tags = [r["tag_name"] for r in github(config, "/releases?per_page=100") if not r["draft"]]
-    older = tags[tags.index(tag) + 1:] if tag in tags else []
-    previous = older[0] if older else None
+    # Releases are returned newest first, so everything after this tag is older.
+    releases = github(config, "/releases?per_page=100")
+    tags = [r["tag_name"] for r in releases]
+    older = releases[tags.index(tag) + 1:] if tag in tags else []
+    # Drafts and prereleases never got a digest, so their commits belong in this one.
+    published = [r["tag_name"] for r in older if not r["draft"] and not r["prerelease"]]
+    previous = published[0] if published else None
     if previous:
         commits = github(config, f"/compare/{previous}...{tag}")["commits"]
     else:
@@ -70,8 +76,15 @@ def commits_since_last_release(config: dict[str, str]) -> tuple[str | None, list
 
 
 def risk_flags(messages: list[str]) -> list[str]:
-    """Rules, not the model, decide what counts as a risk."""
-    return [m for m in messages if m.lower().startswith("revert") or "breaking" in m.lower()]
+    """Rules, not the model, decide what counts as a risk.
+
+    Flags reverts, any mention of "breaking", and the Conventional Commits
+    breaking-change marker: an exclamation mark before the colon, as in "feat!: ...".
+    """
+    return [
+        m for m in messages
+        if m.lower().startswith("revert") or "breaking" in m.lower() or "!:" in m
+    ]
 
 
 def build_prompt(config: dict[str, str], previous: str | None, messages: list[str], risks: list[str]) -> str:

@@ -4,7 +4,6 @@
 
 As a TPM, I've seen product, engineering, and GTM teams quickly lose alignment on the latest releases and what they mean for the program and the business. Release Digest is designed to close that gap by turning every release into an exec summary and a customer changelog, delivered to stakeholders by email.
 
-
 > **Status: concept and design prototype.** This repo explains the idea, the design, and the expected output. The code in [`prototype/`](prototype/) is a reference sketch and has not been deployed. The output shown is a mockup built from a fictional repository.
 
 ![Email mockup](docs/email-mockup.png)
@@ -21,7 +20,7 @@ So someone, often a program manager, rewrites the same changes by hand for each 
 
 ## The idea
 
-When a release is published on Github, a GitHub Action:
+When a release is published on GitHub, a GitHub Action:
 1. Collects the commits since the previous release.
 2. Flags risks with simple rules: reverts and breaking changes.
 3. Asks Claude to write two versions of the same update: an **exec summary** and a **customer changelog**.
@@ -59,7 +58,7 @@ See the [step-by-step walkthrough](docs/walkthrough.md) for the input, prompt, a
 - **Least privilege:** the workflow's GitHub token is read-only (`contents: read`).
 - **No credentials in code or logs:** API keys and recipient addresses are GitHub Actions secrets, masked in logs. Actions logs on public repos are public, so the script never prints recipients.
 - **No shell injection:** the release tag and other inputs reach the script through environment variables, not string interpolation in the shell command.
-- **Fails safely:** missing configuration stops the run with a clear message; API errors report the HTTP status without echoing headers or keys.
+- **Fails safely:** missing configuration stops the run with a clear message; API and network errors name the endpoint and status without echoing headers or keys.
 - **One digest per release:** a concurrency group prevents duplicate emails, and prereleases are skipped.
 
 ## Success metrics
@@ -85,7 +84,7 @@ See the [step-by-step walkthrough](docs/walkthrough.md) for the input, prompt, a
 
 - **Commit message quality:** vague messages produce vague summaries. Could pull PR descriptions as extra context.
 - **Hallucination:** the prompt forbids invented details, but customer-facing text may need a human approval step before sending.
-- **Rule coverage:** keyword rules catch obvious risks only. Labels and failing CI checks are natural next signals.
+- **Rule coverage:** keyword rules catch obvious risks only, and they read just the first line of each commit, so a `BREAKING CHANGE:` note in a commit body is missed. Commit bodies, labels, and failing CI checks are natural next signals.
 - **Data sensitivity:** commit messages go to an LLM API. Private repos need a review of data handling.
 - **Prompt injection:** commit messages are untrusted text. The prompt treats them as data, and the human review step before customer sends is the real safeguard.
 - **False positives:** a keyword rule flags "Fix breaking test" as a risk. Acceptable for v1, since an extra flag is cheaper than a missed one.
@@ -96,7 +95,7 @@ See the [step-by-step walkthrough](docs/walkthrough.md) for the input, prompt, a
 |---|---|
 | [`docs/walkthrough.md`](docs/walkthrough.md) | One release traced from trigger to email |
 | [`docs/email-mockup.png`](docs/email-mockup.png) | Mockup of the email stakeholders receive |
-| [`prototype/digest.py`](prototype/digest.py) | Reference sketch: about 90 lines of Python, standard library only |
+| [`prototype/digest.py`](prototype/digest.py) | Reference sketch: about 170 lines of Python, standard library only |
 | [`prototype/test_digest.py`](prototype/test_digest.py) | Tests for the risk rules and prompt (no API keys needed) |
 | [`prototype/workflow/release-digest.yml`](prototype/workflow/release-digest.yml) | Reference GitHub Actions workflow (kept outside `.github/` so it doesn't run) |
 

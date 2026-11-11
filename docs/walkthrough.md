@@ -24,8 +24,8 @@ Refactor search query builder
 
 | Rule | Matches |
 |---|---|
-| Commit starts with "Revert" | Revert "Add caching layer for search results" |
-| Commit mentions "breaking" | BREAKING: remove v1 sharing API |
+| Commit starts with "Revert" | Revert "Add caching layer for search results" (stale results in testing) |
+| Commit mentions "breaking" or uses the `!:` marker | BREAKING: remove v1 sharing API, integrations must move to v2 |
 
 **2 risks flagged.** These go to the model as a required list so it can explain them. Separately, code appends the same commits to the email verbatim, so a risk reaches readers even if the model leaves it out.
 
